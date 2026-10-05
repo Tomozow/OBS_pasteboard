@@ -1,0 +1,33 @@
+[project]
+name = "obs-pasteboard"
+version = "0.1.0"
+description = "OBS Studio にクリップボードの画像・テキストを直接ペーストできる Python スクリプト拡張"
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "obsws-python>=1.8.0",
+    "pillow>=12.3.0",
+    "pytest>=9.1.1",
+    "pytest-timeout>=2.4.0",
+    "ruff>=0.16.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "e2e: 実際の OBS Studio インスタンスが必要なエンドツーエンドテスト",
+]
+addopts = "-m 'not e2e' --strict-markers"
+timeout = 120
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"  # OBS 側で読み込める最低バージョン
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "SIM", "RUF"]
+ignore = [
+    "SIM105",  # try-except-pass は OBS スクリプトの防御的処理で意図的に使用
+]

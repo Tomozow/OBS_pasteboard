@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync
+      - run: uv run ruff check .
+      - run: uv run pytest
+      # OBS で読み込める最低バージョンでも確認する
+      - run: uv run --python 3.10 --isolated --no-project --with pytest --with pytest-timeout --with pillow --with obsws-python pytest -p no:cacheprovider
+
+  release:
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build zip
+        run: >
+          git archive --format=zip --prefix=obs_pasteboard/
+          -o "obs_pasteboard-${GITHUB_REF_NAME}.zip" HEAD
+          obs_pasteboard.py pasteboard_core LICENSE README.md README.ja.md
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" "obs_pasteboard-${GITHUB_REF_NAME}.zip" --generate-notes
